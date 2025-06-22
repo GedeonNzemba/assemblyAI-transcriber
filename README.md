@@ -48,6 +48,14 @@ This will submit an audio URL to the `/transcribe` endpoint. The server will ret
 curl -X POST -H "Content-Type: application/json" -d '{"audioUrl": "https://assemblyai-realtimestatic-prod.s3.us-west-2.amazonaws.com/static/demos/media/20130514-105844-320k.mp3"}' http://localhost:3000/transcribe
 ```
 
+### 2. Extract Text from a PDF
+
+This will submit a PDF URL to the `/extract-pdf` endpoint. The server will download the PDF, extract its text content, cache the result in R2, and return the full text.
+
+```bash
+curl -X POST -H "Content-Type: application/json" -d '{"pdfUrl": "https://www.sounddoctrine.net/sermons/pdf/101214.pdf"}' http://localhost:3000/extract-pdf
+```
+
 **Expected Response:**
 
 ```json

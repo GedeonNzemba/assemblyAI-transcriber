@@ -1,9 +1,11 @@
 import { S3Client, GetObjectCommand, HeadObjectCommand, PutObjectCommand } from '@aws-sdk/client-s3';
+import axios from 'axios';
+import pdf from 'pdf-parse';
+import { Readable } from 'stream';
 import { AssemblyAI } from 'assemblyai';
 import crypto from 'crypto';
 import dotenv from 'dotenv';
 import express, { Request, Response } from 'express';
-import { Readable } from 'stream';
 
 dotenv.config();
 
@@ -124,6 +126,55 @@ app.get('/status/:id', async (req: Request, res: Response) => {
   } catch (error) {
     console.error('Error retrieving transcript status:', error);
     return res.status(500).json({ error: 'Failed to get job status.' });
+  }
+});
+
+app.post('/extract-pdf', async (req, res) => {
+  const { pdfUrl } = req.body;
+
+  if (!pdfUrl) {
+    return res.status(400).json({ error: 'pdfUrl is required' });
+  }
+
+  const cacheKey = getCacheKey(pdfUrl) + '.txt'; // Append .txt to differentiate from audio caches
+
+  try {
+    // 1. Check R2 for cached PDF text
+    await s3.send(new HeadObjectCommand({ Bucket: R2_BUCKET_NAME, Key: cacheKey }));
+    const data = await s3.send(new GetObjectCommand({ Bucket: R2_BUCKET_NAME, Key: cacheKey }));
+    const text = await streamToString(data.Body as Readable);
+
+    console.log('PDF cache hit for:', pdfUrl);
+    return res.status(200).json({ text });
+
+  } catch (error: any) {
+    if (error.name !== 'NotFound') {
+      console.error('Error checking PDF cache:', error);
+      return res.status(500).json({ error: 'Could not check PDF cache.' });
+    }
+
+    // 2. Cache miss: Download, parse, and cache the PDF
+    console.log('PDF cache miss. Processing new PDF from:', pdfUrl);
+    try {
+      const response = await axios.get(pdfUrl, { responseType: 'arraybuffer' });
+      const pdfData = await pdf(response.data);
+      const extractedText = pdfData.text;
+
+      // Upload the extracted text to R2
+      await s3.send(new PutObjectCommand({
+        Bucket: R2_BUCKET_NAME,
+        Key: cacheKey,
+        Body: extractedText,
+        ContentType: 'text/plain',
+      }));
+
+      console.log('Successfully extracted and cached PDF text for:', pdfUrl);
+      return res.status(200).json({ text: extractedText });
+
+    } catch (parseError: any) {
+      console.error('Failed to download or parse PDF:', parseError.message);
+      return res.status(500).json({ error: 'Failed to process the PDF file.' });
+    }
   }
 });
 
