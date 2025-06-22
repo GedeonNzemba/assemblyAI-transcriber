@@ -142,10 +142,11 @@ app.post('/extract-pdf', async (req, res) => {
     // 1. Check R2 for cached PDF text
     await s3.send(new HeadObjectCommand({ Bucket: R2_BUCKET_NAME, Key: cacheKey }));
     const data = await s3.send(new GetObjectCommand({ Bucket: R2_BUCKET_NAME, Key: cacheKey }));
-    const text = await streamToString(data.Body as Readable);
+    const cachedText = await streamToString(data.Body as Readable);
 
     console.log('PDF cache hit for:', pdfUrl);
-    return res.status(200).json({ text });
+    // Ensure the response is always a JSON object
+    return res.status(200).json({ text: cachedText });
 
   } catch (error: any) {
     if (error.name !== 'NotFound') {
