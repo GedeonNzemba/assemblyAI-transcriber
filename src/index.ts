@@ -203,8 +203,9 @@ app.post('/transcription-status', async (req: Request, res: Response) => {
     return res.status(200).json({ status: 'completed', transcript: JSON.parse(body) });
 
   } catch (error: any) {
-    if (error.name === 'NotFound') {
-      // The file isn't in the cache yet, so it's still processing
+    // The file isn't in the cache yet, so it's still processing.
+    // The AWS S3 SDK v3 throws 'NoSuchKey' instead of 'NotFound'.
+    if (error.name === 'NotFound' || error.name === 'NoSuchKey') {
       return res.status(202).json({ status: 'processing' });
     }
     // Handle other potential S3 errors
