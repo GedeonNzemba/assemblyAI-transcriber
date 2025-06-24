@@ -154,9 +154,17 @@ app.post('/extract-pdf', async (req, res) => {
     // 2. Cache miss: Download, parse, and cache the PDF
     console.log('PDF cache miss. Processing:', pdfUrl);
     try {
-      const response = await axios.get(pdfUrl, { responseType: 'arraybuffer' });
+      console.log(`[PDF EXTRACTION] About to download PDF from: ${pdfUrl}`);
+      const response = await axios.get(pdfUrl, { 
+        responseType: 'arraybuffer',
+        timeout: 25000 // 25-second timeout
+      });
+      console.log(`[PDF EXTRACTION] Successfully downloaded PDF. Size: ${response.data.length} bytes.`);
+
+      console.log('[PDF EXTRACTION] About to parse PDF data.');
       const data = await pdf(response.data);
       const text = data.text;
+      console.log('[PDF EXTRACTION] Successfully parsed PDF.');
 
       // Cache the extracted text in R2
       await s3.send(new PutObjectCommand({
