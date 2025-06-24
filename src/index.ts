@@ -176,6 +176,8 @@ app.post('/extract-pdf', async (req, res) => {
   }
 });
 
+// gedeon
+
 app.post('/transcription-status', async (req: Request, res: Response) => {
   const { audioUrl } = req.body;
   if (!audioUrl) {
