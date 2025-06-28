@@ -1,3 +1,11 @@
+---
+title: Forced Alignment Server
+emoji: 🚀
+colorFrom: blue
+colorTo: green
+sdk: docker
+app_port: 3001
+---
 # AssemblyAI Transcription Server
 
 This Node.js/Express server provides an API to transcribe audio files using AssemblyAI's asynchronous transcription service. It includes a caching layer using Cloudflare R2 to avoid re-transcribing the same audio files.
