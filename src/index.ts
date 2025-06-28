@@ -2,6 +2,7 @@ import { GetObjectCommand, HeadObjectCommand, PutObjectCommand, S3Client } from 
 import axios from 'axios';
 import { spawn } from 'child_process';
 import crypto from 'crypto';
+import cors from 'cors';
 import dotenv from 'dotenv';
 import express, { Request, Response } from 'express';
 import fs from 'fs/promises';
@@ -45,6 +46,26 @@ const s3 = new S3Client({
     secretAccessKey: process.env.SECRET_ACCESS_KEY!,
   },
 });
+
+// --- CORS Configuration ---
+const allowedOrigins = [
+  'http://localhost:5173', // Local admin dashboard
+  // Add your production dashboard URL here when you deploy it
+  // 'https://your-admin-dashboard.onrender.com'
+];
+
+app.use(cors({
+  origin: function (origin, callback) {
+    // allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.indexOf(origin) === -1) {
+      const msg = 'The CORS policy for this site does not allow access from the specified Origin.';
+      return callback(new Error(msg), false);
+    }
+    return callback(null, true);
+  }
+}));
+// --------------------------
 
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
