@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: forced-alignment-server
+    env: docker
+    plan: free # Or a paid instance type for more power
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /
+    envVars:
+      - key: PORT
+        value: 3001
+      # The following secrets must be set in the Render dashboard
+      - key: ACCOUNT_ID
+        fromSecret: true
+      - key: ACCOUNT_KEY_ID
+        fromSecret: true
+      - key: SECRET_ACCESS_KEY
+        fromSecret: true
+      - key: R2_BUCKET_NAME
+        fromSecret: true
